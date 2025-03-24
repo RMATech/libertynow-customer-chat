@@ -1,7 +1,6 @@
-# Beacon Chat Backend (Elixir + Phoenix) Chat is inspired by https://github.com/dwyl/phoenix-liveview-chat-example
-
+# Beacon Chat Backend (Elixir + Phoenix) 
 ## Overview
-This is the backend for the **Beacon-Based Chat Application**, built using **Elixir** and **Phoenix Framework**. It allows real-time communication (chat and call trigger logic) between users when they are in proximity to BLE beacons.
+This is the backend for the **Beacon-Based Chat Application**, built using **Elixir** and **Phoenix Framework**. It allows real-time communication (chat and call trigger logic) between users when they are in proximity to BLE beacons.Chat is inspired by https://github.com/dwyl/phoenix-liveview-chat-example
 
 ## Features
 - Real-time one-to-one messaging via Phoenix Channels
