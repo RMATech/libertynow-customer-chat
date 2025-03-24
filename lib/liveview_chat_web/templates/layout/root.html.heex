@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content={csrf_token_value()} />
     <.live_title suffix=" · Phoenix Framework">
-      <%= assigns[:page_title] || "LiveviewChat" %>
+      {assigns[:page_title] || "LiveviewChat"}
     </.live_title>
     <link phx-track-static rel="stylesheet" href={Routes.static_path(@conn, "/assets/app.css")} />
     <script
@@ -26,7 +26,7 @@
             <ul>
               <%= for name <- @presence do %>
                 <li>
-                  <%= name %>
+                  {name}
                 </li>
               <% end %>
             </ul>
@@ -38,11 +38,11 @@
                 <img width="42px" src={@person.picture} class="-mt-3" />
               </li>
               <li class="text-white">
-                <%= link("logout", to: "/logout") %>
+                {link("logout", to: "/logout")}
               </li>
             <% else %>
               <li class="bg-green-600 text-white rounded-xl px-4 py-2 w-full mb-2 font-bold">
-                <%= link("Login", to: "/login") %>
+                {link("Login", to: "/login")}
               </li>
             <% end %>
           </ul>
@@ -50,6 +50,6 @@
         <h1 class="text-3xl mb-4 text-center font-mono text-white">LiveView Chat Example</h1>
       </section>
     </header>
-    <%= @inner_content %>
+    {@inner_content}
   </body>
 </html>
