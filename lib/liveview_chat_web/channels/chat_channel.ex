@@ -3,7 +3,7 @@ defmodule LiveviewChatWeb.ChatChannel do
   alias LiveviewChat.Message
   alias Ecto.Changeset
 
-  def join("chat:" <> store_id, %{"user_id" => user_id}, socket) do
+  def join("chat:" <> store_id, _payload, %{params: %{"user_id" => user_id}} = socket) do
     Phoenix.PubSub.subscribe(LiveviewChat.PubSub, "liveview_chat:#{user_id}")
 
     socket =

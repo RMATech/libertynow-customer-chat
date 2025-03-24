@@ -42,7 +42,8 @@ defmodule LiveviewChat.Message do
   end
 
   def notify({:ok, message}, event) do
-    PubSub.broadcast(LiveviewChat.PubSub, "liveview_chat", {event, message})
+    PubSub.broadcast(LiveviewChat.PubSub, "liveview_chat:#{message.user_id}", {event, message})
+    {:ok, message}
   end
 
   def notify({:error, reason}, _event), do: {:error, reason}
