@@ -3,46 +3,46 @@ defmodule LiveviewChatWeb.ChatChannel do
   alias LiveviewChat.Message
   alias Ecto.Changeset
 
-  def join("chat:" <> store_id, _payload, %{params: %{"user_id" => user_id}} = socket) do
-    Phoenix.PubSub.subscribe(LiveviewChat.PubSub, "liveview_chat:#{user_id}")
-
-    socket =
-      socket
-      |> assign(:user_id, user_id)
-      |> assign(:store_id, store_id)
-
+  # When a client (e.g., a phone app) joins the "chat:lobby" channel,
+  # we subscribe this channel process to the "liveview_chat" topic.
+  # This allows the channel to receive broadcasts of new messages created
+  # (from both web and phone clients) and relay them to the connected client.
+  def join("chat:lobby", _payload, socket) do
+    :ok = Phoenix.PubSub.subscribe(LiveviewChat.PubSub, "liveview_chat")
     {:ok, socket}
   end
 
-  def handle_in("new_msg", %{"message" => msg_body, "name" => name}, socket) do
-    enriched_payload = %{
-      "user_id" => socket.assigns.user_id,
-      "store_id" => socket.assigns.store_id,
-      "message" => msg_body,
-      "name" => name,
-      "sender_type" => "user"
-    }
-
-    case Message.create_message(enriched_payload) do
-      {:ok, message} ->
-        {:reply, {:ok, %{message: "Message sent"}}, socket}
+  # This function handles incoming "new_msg" events from clients.
+  # The payload contains the message data sent from the client.
+  # We attempt to create a new message in the database.
+  def handle_in("new_msg", payload, socket) do
+    case Message.create_message(payload) do
+      {:ok, _message} ->
+        # DO NOT broadcast here. The relay happens in handle_info/2.
+        {:reply, {:ok, %{message: "Message created successfully"}}, socket}
 
       {:error, changeset} ->
-        {:reply, {:error, %{errors: translate_changeset_errors(changeset)}}, socket}
+        errors = translate_changeset_errors(changeset)
+        {:reply, {:error, %{errors: errors}}, socket}
     end
   end
 
+   # This function handles incoming broadcasts on the "liveview_chat" topic.
+  # When a new message is broadcast (as {:message_created, message}),
+  # this function relays it to all clients connected on "chat:lobby" by
+  # broadcasting a "new_msg" event with the message data.
   def handle_info({:message_created, message}, socket) do
     broadcast!(socket, "new_msg", %{
       id: message.id,
       name: message.name,
-      message: message.message,
-      sender_type: message.sender_type
+      message: message.message
     })
 
     {:noreply, socket}
   end
 
+  # Helper function to convert Ecto changeset errors into a simple map.
+  # This makes the errors JSON-friendly so that they can be sent as a response.
   defp translate_changeset_errors(changeset) do
     Changeset.traverse_errors(changeset, fn {msg, _opts} -> msg end)
   end
