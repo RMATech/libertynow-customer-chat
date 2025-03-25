@@ -56,6 +56,22 @@ defmodule LiveviewChat.Message do
   #   )
   #   |> LiveviewChat.Repo.all()
   # end
+  def list_chat_sessions_for_dashboard(store_id) do
+    subquery =
+      from(m in Message,
+        where: m.store_id == ^store_id and m.sender_type == "user",
+        order_by: [desc: m.inserted_at],
+        distinct: [m.user_id],
+        select: %{
+          user_id: m.user_id,
+          last_message: m.message,
+          last_sent_at: m.inserted_at
+        }
+      )
+
+    Repo.all(subquery)
+  end
+
   def list_messages_for_user(user_id, store_id) do
     import Ecto.Query
 

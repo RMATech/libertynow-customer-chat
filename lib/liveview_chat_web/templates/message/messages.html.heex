@@ -1,42 +1,56 @@
-<ul id="msg-list" class="w-full">
-  <%= for message <- @messages do %>
-    <li id={"msg-#{message.id}"} class="px-5 flex justify-between items-center">
-      <div>
-        <b>{message.name}:</b> {message.message}
-      </div>
-      <small class="text-gray-500 whitespace-nowrap ml-2">
-        {message.inserted_at}
-      </small>
-    </li>
-  <% end %>
-</ul>
+<div class="flex h-screen">
+  <!-- SIDEBAR -->
+  <aside class="w-1/4 bg-gray-100 p-4 overflow-y-auto h-screen">
+    <h2 class="font-bold mb-4">Chat Sessions</h2>
+    <ul>
+      <%= for session <- @chat_sessions do %>
+        <li class="mb-2">
+          <button
+            phx-click="select_chat"
+            phx-value-user_id={session.user_id}
+            class={"w-full text-left px-4 py-2 rounded-lg " <>
+              if @selected_user_id == session.user_id, do: "bg-blue-200", else: "bg-white hover:bg-gray-200"}
+          >
+            User ID: {session.user_id}
+          </button>
+        </li>
+      <% end %>
+    </ul>
+  </aside>
+  
+<!-- MAIN CHAT PANEL -->
+  <main class="flex-1 flex flex-col justify-between p-6 bg-white">
+    <%= if @selected_user_id do %>
+      <!-- Message List -->
+      <ul id="msg-list" class="space-y-4 overflow-y-auto flex-1">
+        <%= for message <- @messages do %>
+          <li id={"msg-#{message.id}"} class="flex justify-between items-center">
+            <div>
+              <b>{message.name} ({message.sender_type}):</b> {message.message}
+            </div>
+            <small class="text-gray-500 ml-2">
+              {message.inserted_at}
+            </small>
+          </li>
+        <% end %>
+      </ul>
+      
+<!-- Reply Box -->
+      <footer class="bg-slate-100 p-4 mt-4">
+        <.form :let={f} for={@changeset} phx-submit="new_message">
+          {hidden_input(f, :name, value: "Admin")}
+          {hidden_input(f, :user_id, value: @selected_user_id)}
+          {hidden_input(f, :store_id, value: @store_id)}
+          {hidden_input(f, :sender_type, value: "admin")}
 
-<footer class="fixed bottom-0 w-full bg-slate-300 pb-2 px-5 pt-2">
-  <.form :let={f} for={@changeset} id="form" phx-submit="new_message" phx-hook="Form">
-    <%= if @loggedin do %>
-      {text_input(f, :name, id: "name", value: @person.givenName, class: "hidden")}
-      {hidden_input(f, :user_id, value: @person.id)}
+          {text_input(f, :message, placeholder: "Reply message", class: "border p-2 w-3/4")}
+          {submit("Send", class: "ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg")}
+        </.form>
+      </footer>
     <% else %>
-      {text_input(f, :name,
-        id: "name",
-        placeholder: "Name",
-        autofocus: "true",
-        class: "border p-2 w-9/12 mb-2 mt-2 mr-2"
-      )}
-      {hidden_input(f, :user_id, value: "guest_#{:rand.uniform(1000)}")}
+      <p class="text-gray-600 text-center mt-10">
+        Select a user from the sidebar to view messages.
+      </p>
     <% end %>
-
-    {hidden_input(f, :store_id, value: "store123")}
-    {hidden_input(f, :sender_type, value: "user")}
-
-    {text_input(f, :message,
-      id: "msg",
-      placeholder: "Message",
-      class: "border p-2 w-10/12 mb-2 mt-2 float-left"
-    )}
-    <p class="text-amber-600">
-      {error_tag(f, :message)}
-    </p>
-    {submit("Send", class: "bg-sky-600 text-white rounded-xl px-4 py-2 mt-2 float-right")}
-  </.form>
-</footer>
+  </main>
+</div>
