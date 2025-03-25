@@ -8,55 +8,71 @@ defmodule LiveviewChatWeb.MessageLive do
 
   @presence_topic "liveview_chat_presence"
 
+  # def mount(_params, _session, socket) do
+  #   if connected?(socket) do
+  #     Message.subscribe()
+
+  #     {id, name} =
+  #       if Map.has_key?(socket.assigns, :person) do
+  #         {socket.assigns.person.id, socket.assigns.person.givenName}
+  #       else
+  #         {socket.id, "guest"}
+  #       end
+
+  #     {:ok, _} = Presence.track(self(), @presence_topic, id, %{name: name})
+  #     Phoenix.PubSub.subscribe(PubSub, @presence_topic)
+  #   end
+
+  #   changeset =
+  #     if Map.has_key?(socket.assigns, :person) do
+  #       Message.changeset(%Message{}, %{"name" => socket.assigns.person.givenName})
+  #     else
+  #       Message.changeset(%Message{}, %{})
+  #     end
+
+  #   messages = Message.list_messages() |> Enum.reverse()
+
+  #   {:ok,
+  #    assign(socket,
+  #      messages: messages,
+  #      changeset: changeset,
+  #      presence: get_presence_names()
+  #    ), temporary_assigns: [messages: []]}
+  # end
   def mount(_params, _session, socket) do
     if connected?(socket) do
-      Message.subscribe()
-
-      {id, name} =
-        if Map.has_key?(socket.assigns, :person) do
-          {socket.assigns.person.id, socket.assigns.person.givenName}
-        else
-          {socket.id, "guest"}
-        end
-
-      {:ok, _} = Presence.track(self(), @presence_topic, id, %{name: name})
-      Phoenix.PubSub.subscribe(PubSub, @presence_topic)
+      Phoenix.PubSub.subscribe(LiveviewChat.PubSub, "dashboard:store123")
+      IO.puts("✅ Explicitly subscribed to dashboard:store123")
     end
-
-    changeset =
-      if Map.has_key?(socket.assigns, :person) do
-        Message.changeset(%Message{}, %{"name" => socket.assigns.person.givenName})
-      else
-        Message.changeset(%Message{}, %{})
-      end
-
+  
     messages = Message.list_messages() |> Enum.reverse()
-
+  
     {:ok,
-     assign(socket,
-       messages: messages,
-       changeset: changeset,
-       presence: get_presence_names()
-     ), temporary_assigns: [messages: []]}
+      assign(socket,
+        messages: messages,
+        changeset: Message.changeset(%Message{}, %{}),
+        presence: get_presence_names()
+      )}
   end
-
   def render(assigns) do
     LiveviewChatWeb.MessageView.render("messages.html", assigns)
   end
 
   def handle_event("new_message", %{"message" => params}, socket) do
     case Message.create_message(params) do
-      {:error, changeset} ->
-        {:noreply, assign(socket, changeset: changeset)}
-
-      :ok ->
+      {:ok, _message} ->
         changeset = Message.changeset(%Message{}, %{"name" => params["name"]})
+        {:noreply, assign(socket, changeset: changeset)}
+  
+      {:error, changeset} ->
+        IO.inspect(changeset.errors, label: "⚠️ Changeset errors clearly")
         {:noreply, assign(socket, changeset: changeset)}
     end
   end
 
   def handle_info({:message_created, message}, socket) do
-    {:noreply, assign(socket, messages: [message])}
+    IO.inspect(message, label: "✅ New message arrived clearly")
+    {:noreply, assign(socket, messages: [message | socket.assigns.messages])}
   end
 
   def handle_info(%{event: "presence_diff", payload: _diff}, socket) do
