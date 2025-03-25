@@ -44,16 +44,17 @@ defmodule LiveviewChatWeb.MessageLive do
       Phoenix.PubSub.subscribe(LiveviewChat.PubSub, "dashboard:store123")
       IO.puts("✅ Explicitly subscribed to dashboard:store123")
     end
-  
+
     messages = Message.list_messages() |> Enum.reverse()
-  
+
     {:ok,
-      assign(socket,
-        messages: messages,
-        changeset: Message.changeset(%Message{}, %{}),
-        presence: get_presence_names()
-      )}
+     assign(socket,
+       messages: messages,
+       changeset: Message.changeset(%Message{}, %{}),
+       presence: get_presence_names()
+     )}
   end
+
   def render(assigns) do
     LiveviewChatWeb.MessageView.render("messages.html", assigns)
   end
@@ -63,7 +64,7 @@ defmodule LiveviewChatWeb.MessageLive do
       {:ok, _message} ->
         changeset = Message.changeset(%Message{}, %{"name" => params["name"]})
         {:noreply, assign(socket, changeset: changeset)}
-  
+
       {:error, changeset} ->
         IO.inspect(changeset.errors, label: "⚠️ Changeset errors clearly")
         {:noreply, assign(socket, changeset: changeset)}

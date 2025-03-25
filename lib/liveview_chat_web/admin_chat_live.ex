@@ -2,7 +2,6 @@ defmodule LiveviewChatWeb.AdminChatLive do
   use LiveviewChatWeb, :live_view
   alias LiveviewChat.Message
 
-
   # def mount(_params, _session, socket) do
   #   if socket.assigns[:loggedin] do
   #     Phoenix.PubSub.subscribe(LiveviewChat.PubSub, "chat:#{@store_id}")
@@ -25,7 +24,7 @@ defmodule LiveviewChatWeb.AdminChatLive do
       messages = Message.list_messages() |> Enum.group_by(& &1.user_id)
 
       IO.puts("Subscribed to dashboard:store123 ✅")
-  
+
       {:ok,
        assign(socket,
          messages_by_user: messages,
@@ -36,7 +35,7 @@ defmodule LiveviewChatWeb.AdminChatLive do
       {:ok, socket}
     end
   end
-  
+
   def handle_event("select_user", %{"user_id" => user_id}, socket) do
     {:noreply, assign(socket, current_user_id: user_id)}
   end
@@ -63,23 +62,23 @@ defmodule LiveviewChatWeb.AdminChatLive do
        message_input: ""
      )}
   end
+
   # def handle_info({:new_message, message}, socket) do
   #   IO.inspect(message, label: "New incoming message")
   #   # Update the grouped message list
   #   updated_messages_by_user =
   #     socket.assigns.messages_by_user
   #     |> Map.update(message.user_id, [message], fn msgs -> [message | msgs] end)
-  
+
   #   {:noreply, assign(socket, messages_by_user: updated_messages_by_user)}
   # end
   def handle_info({:message_created, message}, socket) do
     IO.inspect(message, label: "New incoming message")
-  
+
     updated_messages_by_user =
       socket.assigns.messages_by_user
       |> Map.update(message.user_id, [message], fn msgs -> [message | msgs] end)
-  
+
     {:noreply, assign(socket, messages_by_user: updated_messages_by_user)}
   end
-  
 end

@@ -5,7 +5,7 @@ defmodule LiveviewChatWeb.UserSocket do
   channel "chat:*", LiveviewChatWeb.ChatChannel
 
   ## Transports (optional depending on your Phoenix version)
-  #transport(:websocket, Phoenix.Transports.WebSocket)
+  # transport(:websocket, Phoenix.Transports.WebSocket)
 
   # Or use this if Phoenix >= 1.6
   # transport :websocket, Phoenix.Socket.Transport

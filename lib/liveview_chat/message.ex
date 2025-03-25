@@ -5,7 +5,18 @@ defmodule LiveviewChat.Message do
   alias LiveviewChat.Repo
   alias Phoenix.PubSub
   alias __MODULE__
-  @derive {Jason.Encoder, only: [:id, :message, :name, :user_id, :store_id, :sender_type, :inserted_at, :updated_at]}
+
+  @derive {Jason.Encoder,
+           only: [
+             :id,
+             :message,
+             :name,
+             :user_id,
+             :store_id,
+             :sender_type,
+             :inserted_at,
+             :updated_at
+           ]}
 
   schema "messages" do
     field :message, :string
@@ -37,6 +48,7 @@ defmodule LiveviewChat.Message do
     |> order_by(desc: :inserted_at)
     |> Repo.all()
   end
+
   # def list_messages_for_user(user_id) do
   #   from(m in Message,
   #     where: m.user_id == ^user_id or (m.admin == true and m.recipient_id == ^user_id),
@@ -46,7 +58,7 @@ defmodule LiveviewChat.Message do
   # end
   def list_messages_for_user(user_id, store_id) do
     import Ecto.Query
-  
+
     # Check if user has sent at least one message
     started_conversation? =
       from(m in Message,
@@ -54,7 +66,7 @@ defmodule LiveviewChat.Message do
         select: count(m.id)
       )
       |> Repo.one()
-  
+
     if started_conversation? > 0 do
       # User started chat – return all messages related to them in this store
       from(m in Message,
@@ -67,7 +79,7 @@ defmodule LiveviewChat.Message do
       []
     end
   end
-  
+
   def subscribe() do
     PubSub.subscribe(LiveviewChat.PubSub, "dashboard:store123")
   end
@@ -86,16 +98,23 @@ defmodule LiveviewChat.Message do
   # end
   def notify({:ok, message} = result, event) do
     # Notify the dashboard
-    Phoenix.PubSub.broadcast(LiveviewChat.PubSub, "dashboard:#{message.store_id}", {event, message})
-  
-    # Notify the user (mobile app)
-    Phoenix.PubSub.broadcast(LiveviewChat.PubSub, "liveview_chat:#{message.user_id}", {:message_created, message})
+    Phoenix.PubSub.broadcast(
+      LiveviewChat.PubSub,
+      "dashboard:#{message.store_id}",
+      {event, message}
+    )
 
-  
+    # Notify the user (mobile app)
+    Phoenix.PubSub.broadcast(
+      LiveviewChat.PubSub,
+      "liveview_chat:#{message.user_id}",
+      {:message_created, message}
+    )
+
     IO.inspect(message, label: "🚀 PubSub broadcasted message")
-  
+
     result
   end
-  
+
   def notify({:error, reason}, _event), do: {:error, reason}
 end
