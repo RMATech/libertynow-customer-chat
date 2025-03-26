@@ -16,9 +16,14 @@ defmodule LiveviewChatWeb.ChatChannel do
   # The payload contains the message data sent from the client.
   # We attempt to create a new message in the database.
   def handle_in("new_msg", payload, socket) do
+    payload =
+      payload
+      |> Map.put("sender_type", "user")
+      |> Map.put("user_id", Ecto.UUID.generate())
+      |> Map.put("store_id", "Hegna")
+
     case Message.create_message(payload) do
       {:ok, _message} ->
-        # DO NOT broadcast here. The relay happens in handle_info/2.
         {:reply, {:ok, %{message: "Message created successfully"}}, socket}
 
       {:error, changeset} ->

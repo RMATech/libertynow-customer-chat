@@ -56,7 +56,10 @@ defmodule LiveviewChatWeb.MessageLive do
   # The form sends an event "new_message" with the message parameters.
   def handle_event("new_message", %{"message" => params}, socket) do
     # If your schema uses :name (not :sender), do:
-    params = Map.put(params, "name", "admin")
+    params =
+      params
+      |> Map.put("name", "admin")
+      |> Map.put("sender_type", "admin")
 
     # Attempt to create a new message in the database.
     case Message.create_message(params) do

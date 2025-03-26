@@ -19,12 +19,10 @@ defmodule LiveviewChat.Message do
   @doc false
   def changeset(message, attrs) do
     message
-    |> cast(attrs, [:name, :message])
-    |> validate_required([:name, :message])
+    |> cast(attrs, [:name, :message, :user_id, :store_id, :sender_type])
+    |> validate_required([:message, :sender_type])
     |> validate_length(:message, min: 2)
   end
-
-
 
   def create_message(attrs) do
     %Message{}
@@ -32,7 +30,6 @@ defmodule LiveviewChat.Message do
     |> Repo.insert()
     |> notify(:message_created)
   end
-
 
   def list_messages do
     Message
@@ -44,7 +41,6 @@ defmodule LiveviewChat.Message do
   def subscribe() do
     PubSub.subscribe(LiveviewChat.PubSub, "liveview_chat")
   end
-
 
   def notify({:ok, message}, event) do
     Phoenix.PubSub.broadcast(LiveviewChat.PubSub, "liveview_chat", {event, message})
