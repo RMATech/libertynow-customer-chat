@@ -16,11 +16,24 @@ defmodule LiveviewChatWeb.ChatChannel do
   # The payload contains the message data sent from the client.
   # We attempt to create a new message in the database.
   def handle_in("new_msg", payload, socket) do
+
+  # Check if the socket already has a user_id assigned.
+  # If not, generate a new unique user_id and assign it to the socket.
+    {user_id, socket} =
+      case socket.assigns[:user_id] do
+        nil ->
+          new_id = Ecto.UUID.generate()
+          {new_id, assign(socket, :user_id, new_id)}
+        existing ->
+          {existing, socket}
+    end
+
     payload =
       payload
       |> Map.put("sender_type", "user")
-      |> Map.put("user_id", Ecto.UUID.generate())
+      |> Map.put("user_id", user_id)
       |> Map.put("store_id", "Hegna")
+      |> Map.put("name", "Hegna-" <> user_id)   
 
     case Message.create_message(payload) do
       {:ok, _message} ->
@@ -40,7 +53,8 @@ defmodule LiveviewChatWeb.ChatChannel do
     broadcast!(socket, "new_msg", %{
       id: message.id,
       name: message.name,
-      message: message.message
+      message: message.message,
+      sender_type: message.sender_type
     })
 
     {:noreply, socket}
