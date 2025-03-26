@@ -65,15 +65,15 @@ defmodule LiveviewChatWeb.ChatChannel do
     IO.puts("📥 [ChatChannel] handle_info triggered")
     IO.inspect(message, label: "📥 B2C Message from PubSub")
 
-    # broadcast!(socket, "new_msg", %{
-    #   id: message.id,
-    #   message: message.message,
-    #   name: message.name,
-    #   sender_type: message.sender_type,
-    #   user_id: message.user_id,
-    #   store_id: message.store_id,
-    #   inserted_at: message.inserted_at
-    # })
+    broadcast!(socket, "new_msg", %{
+      id: message.id,
+      message: message.message,
+      name: message.name,
+      sender_type: message.sender_type,
+      user_id: message.user_id,
+      store_id: message.store_id,
+      inserted_at: message.inserted_at
+    })
 
     {:noreply, socket}
   end
