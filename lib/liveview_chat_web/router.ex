@@ -19,11 +19,14 @@ defmodule LiveviewChatWeb.Router do
   scope "/", LiveviewChatWeb do
     pipe_through [:browser, :authOptional]
 
-    live "/", MessageLive
+    live_session :admin_session, on_mount: {LiveviewChatWeb.AuthController, :default} do
+      live "/", MessageLive
+    end
     get "/login", AuthController, :login
     get "/logout", AuthController, :logout
   end
 
+  
   scope "/api", LiveviewChatWeb do
     pipe_through :api
     resources "/messages", MessageController, only: [:index, :create]

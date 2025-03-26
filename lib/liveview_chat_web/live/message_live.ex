@@ -1,127 +1,3 @@
-# defmodule LiveviewChatWeb.MessageLive do
-#   use LiveviewChatWeb, :live_view
-#   alias LiveviewChat.Message
-#   alias LiveviewChat.Presence
-#   alias LiveviewChat.PubSub
-#   # run authentication on mount
-#   on_mount LiveviewChatWeb.AuthController
-
-#   @presence_topic "liveview_chat_presence"
-
-#   # def mount(_params, _session, socket) do
-#   #   if connected?(socket) do
-#   #     Message.subscribe()
-
-#   #     {id, name} =
-#   #       if Map.has_key?(socket.assigns, :person) do
-#   #         {socket.assigns.person.id, socket.assigns.person.givenName}
-#   #       else
-#   #         {socket.id, "guest"}
-#   #       end
-
-#   #     {:ok, _} = Presence.track(self(), @presence_topic, id, %{name: name})
-#   #     Phoenix.PubSub.subscribe(PubSub, @presence_topic)
-#   #   end
-
-#   #   changeset =
-#   #     if Map.has_key?(socket.assigns, :person) do
-#   #       Message.changeset(%Message{}, %{"name" => socket.assigns.person.givenName})
-#   #     else
-#   #       Message.changeset(%Message{}, %{})
-#   #     end
-
-#   #   messages = Message.list_messages() |> Enum.reverse()
-
-#   #   {:ok,
-#   #    assign(socket,
-#   #      messages: messages,
-#   #      changeset: changeset,
-#   #      presence: get_presence_names()
-#   #    ), temporary_assigns: [messages: []]}
-#   # end
-#   def mount(_params, _session, socket) do
-#     if connected?(socket) do
-#       Phoenix.PubSub.subscribe(LiveviewChat.PubSub, "dashboard:store123")
-#       IO.puts("✅ Explicitly subscribed to dashboard:store123")
-#     end
-
-#     store_id = "store123"
-#     #messages = Message.list_messages() |> Enum.reverse()
-#     sessions = Message.list_chat_sessions_for_dashboard(store_id)
-
-#     {:ok,
-#      assign(socket,
-#      store_id: store_id,
-#      chat_sessions: sessions,
-#        messages: [],
-#        changeset: Message.changeset(%Message{}, %{}),
-#        presence: get_presence_names()
-#      )}
-#   end
-
-#   def render(assigns) do
-#     LiveviewChatWeb.MessageView.render("messages.html", assigns)
-#   end
-
-#   # def handle_event("new_message", %{"message" => params}, socket) do
-#   #   case Message.create_message(params) do
-#   #     {:ok, _message} ->
-#   #       changeset = Message.changeset(%Message{}, %{"name" => params["name"]})
-#   #       {:noreply, assign(socket, changeset: changeset)}
-
-#   #     {:error, changeset} ->
-#   #       IO.inspect(changeset.errors, label: "⚠️ Changeset errors clearly")
-#   #       {:noreply, assign(socket, changeset: changeset)}
-#   #   end
-#   # end
-#   def handle_event("select_chat", %{"user_id" => user_id}, socket) do
-#     messages = Message.list_messages_for_user(user_id, socket.assigns.store_id)
-
-#     {:noreply,
-#      assign(socket,
-#        selected_user_id: user_id,
-#        messages: messages,
-#        changeset: Message.changeset(%Message{}, %{"user_id" => user_id})
-#      )}
-#   end
-
-#   def handle_info({:message_created, message}, socket) do
-#     IO.inspect(message, label: "✅ New message arrived clearly")
-#     {:noreply, assign(socket, messages: [message | socket.assigns.messages])}
-#   end
-
-#   def handle_info(%{event: "presence_diff", payload: _diff}, socket) do
-#     {
-#       :noreply,
-#       assign(socket, presence: get_presence_names())
-#     }
-#   end
-
-#   defp get_presence_names() do
-#     Presence.list(@presence_topic)
-#     |> Enum.map(fn {_k, v} -> List.first(v.metas).name end)
-#     |> group_names()
-#   end
-
-#   # return list of names and number of guests
-#   defp group_names(names) do
-#     loggedin_names = Enum.filter(names, fn name -> name != "guest" end)
-
-#     guest_names =
-#       Enum.count(names, fn name -> name == "guest" end)
-#       |> guest_names()
-
-#     if guest_names do
-#       [guest_names | loggedin_names]
-#     else
-#       loggedin_names
-#     end
-#   end
-
-#   defp guest_names(0), do: nil
-#   defp guest_names(1), do: "1 guest"
-#   defp guest_names(n), do: "#{n} guests"
-# end
 defmodule LiveviewChatWeb.MessageLive do
   use LiveviewChatWeb, :live_view
   alias LiveviewChat.Message
@@ -217,11 +93,16 @@ defmodule LiveviewChatWeb.MessageLive do
 
   def handle_event("select_chat", %{"user_id" => user_id}, socket) do
     messages = Message.list_messages_for_user(user_id, socket.assigns.store_id)
-
+    sessions = Message.list_chat_sessions_for_dashboard(socket.assigns.store_id)
+  
+    IO.inspect(messages, label: "📥 Loaded messages for selected user")
+    IO.inspect(user_id, label: "👉 selected_user_id")
+  
     {:noreply,
      assign(socket,
        selected_user_id: user_id,
        messages: messages,
+       chat_sessions: sessions,
        changeset:
          Message.changeset(%Message{}, %{
            "name" => "Admin",
@@ -231,33 +112,64 @@ defmodule LiveviewChatWeb.MessageLive do
          })
      )}
   end
-
+  
+  # def handle_event("new_message", %{"message" => params}, socket) do
+  #   case Message.create_message(params) do
+  #     {:ok, new_message} ->
+  #       changeset =
+  #         Message.changeset(%Message{}, %{
+  #           "name" => "Admin",
+  #           "user_id" => socket.assigns.selected_user_id,
+  #           "store_id" => socket.assigns.store_id,
+  #           "sender_type" => "admin",
+  #           "message" => ""
+  #         })
+  
+  #       {:noreply,
+  #        assign(socket,
+  #          messages: socket.assigns.messages ++ [new_message],
+  #          changeset: changeset
+  #        )}
+  
+  #     {:error, changeset} ->
+  #       IO.inspect(changeset.errors, label: "⚠️ Changeset errors")
+  #       {:noreply, assign(socket, changeset: changeset)}
+  #   end
+  # end
   def handle_event("new_message", %{"message" => params}, socket) do
     case Message.create_message(params) do
-      {:ok, _message} ->
+      {:ok, _new_message} ->
+        # cleaned-up version (don't append to messages here)
         changeset =
           Message.changeset(%Message{}, %{
             "name" => "Admin",
             "user_id" => socket.assigns.selected_user_id,
             "store_id" => socket.assigns.store_id,
             "sender_type" => "admin",
-            # clean message input
             "message" => ""
           })
-
+  
         {:noreply, assign(socket, changeset: changeset)}
-
+  
       {:error, changeset} ->
         IO.inspect(changeset.errors, label: "⚠️ Changeset errors")
         {:noreply, assign(socket, changeset: changeset)}
     end
   end
-
+  
   def handle_info({:message_created, message}, socket) do
+    IO.inspect(message, label: "📥 Message received in MessageLive")
+
+    updated_sessions = Message.list_chat_sessions_for_dashboard(socket.assigns.store_id)
+  
     if message.user_id == socket.assigns.selected_user_id do
-      {:noreply, assign(socket, messages: socket.assigns.messages ++ [message])}
+      {:noreply,
+       assign(socket,
+         messages: socket.assigns.messages ++ [message],
+         chat_sessions: updated_sessions
+       )}
     else
-      {:noreply, socket}
+      {:noreply, assign(socket, chat_sessions: updated_sessions)}
     end
   end
 

@@ -49,69 +49,60 @@ defmodule LiveviewChat.Message do
     |> Repo.all()
   end
 
-  # def list_messages_for_user(user_id) do
-  #   from(m in Message,
-  #     where: m.user_id == ^user_id or (m.admin == true and m.recipient_id == ^user_id),
-  #     order_by: [asc: m.inserted_at]
-  #   )
-  #   |> LiveviewChat.Repo.all()
-  # end
   def list_chat_sessions_for_dashboard(store_id) do
     subquery =
-      from(m in Message,
-        where: m.store_id == ^store_id and m.sender_type == "user",
-        order_by: [desc: m.inserted_at],
-        distinct: [m.user_id],
-        select: %{
-          user_id: m.user_id,
-          last_message: m.message,
-          last_sent_at: m.inserted_at
-        }
-      )
+    from(m in Message,
+      where: m.store_id == ^store_id and m.sender_type in ^["user", "customer"],
+      order_by: [desc: m.inserted_at],
+      distinct: [m.user_id],
+      select: %{
+        user_id: m.user_id,
+        last_message: m.message,
+        last_sent_at: m.inserted_at
+      }
+    )
+
 
     Repo.all(subquery)
   end
 
+  # def list_messages_for_user(user_id, store_id) do
+  #   import Ecto.Query
+
+  #   # Check if user has sent at least one message
+  #   started_conversation? =
+  #     from(m in Message,
+  #       where: m.user_id == ^user_id and m.store_id == ^store_id and m.sender_type == "user",
+  #       select: count(m.id)
+  #     )
+  #     |> Repo.one()
+
+  #   if started_conversation? > 0 do
+  #     # User started chat – return all messages related to them in this store
+  #     from(m in Message,
+  #       where: m.user_id == ^user_id and m.store_id == ^store_id,
+  #       order_by: [asc: m.inserted_at]
+  #     )
+  #     |> Repo.all()
+  #   else
+  #     # User hasn't started chat yet – return empty list
+  #     []
+  #   end
+  # end
   def list_messages_for_user(user_id, store_id) do
     import Ecto.Query
-
-    # Check if user has sent at least one message
-    started_conversation? =
-      from(m in Message,
-        where: m.user_id == ^user_id and m.store_id == ^store_id and m.sender_type == "user",
-        select: count(m.id)
-      )
-      |> Repo.one()
-
-    if started_conversation? > 0 do
-      # User started chat – return all messages related to them in this store
-      from(m in Message,
-        where: m.user_id == ^user_id and m.store_id == ^store_id,
-        order_by: [asc: m.inserted_at]
-      )
-      |> Repo.all()
-    else
-      # User hasn't started chat yet – return empty list
-      []
-    end
+  
+    from(m in Message,
+      where: m.user_id == ^user_id and m.store_id == ^store_id,
+      order_by: [asc: m.inserted_at]
+    )
+    |> Repo.all()
   end
-
+  
   def subscribe() do
     PubSub.subscribe(LiveviewChat.PubSub, "dashboard:store123")
   end
 
-  # def notify({:ok, message}, event) do
-  #   PubSub.broadcast(LiveviewChat.PubSub, "liveview_chat:#{message.user_id}", {event, message})
-  #   {:ok, message}
-  # end
-  # def notify({:ok, message}, event) do
-  #   #PubSub.broadcast(LiveviewChat.PubSub, "liveview_chat:#{message.user_id}", {event, message})
-
-  #   # Notify dashboard about new message
-  #   Phoenix.PubSub.broadcast(LiveviewChat.PubSub, "dashboard:store123", {event, message})
-  #   IO.inspect(message, label: "🚀 Message broadcasted to PubSub")
-  #   {:ok, message}
-  # end
   def notify({:ok, message} = result, event) do
     # Notify the dashboard
     Phoenix.PubSub.broadcast(
