@@ -7,9 +7,9 @@ defmodule LiveviewChatWeb.ChatChannel do
   # we subscribe this channel process to the "liveview_chat" topic.
   # This allows the channel to receive broadcasts of new messages created
   # (from both web and phone clients) and relay them to the connected client.
-  def join("chat:lobby", _payload, socket) do
-    :ok = Phoenix.PubSub.subscribe(LiveviewChat.PubSub, "liveview_chat")
-    {:ok, socket}
+  def join("chat:lobby:" <> user_id, _payload, socket) do
+    :ok = Phoenix.PubSub.subscribe(LiveviewChat.PubSub, "liveview_chat:#{user_id}")
+    {:ok, assign(socket, :user_id, user_id)}
   end
 
   # This function handles incoming "new_msg" events from clients.
